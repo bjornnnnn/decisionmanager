@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decision Gathering Tool</title>
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --bg-sidebar: #ffffff;
+            --bg-card: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+
+            --val-neutral: #3b82f6;
+            --val-good: #22c55e;
+            --val-bad: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .io-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .app-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        aside {
+            width: 400px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        main {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            background-color: var(--bg-main);
+        }
+
+        button, .btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            transition: background 0.15s ease;
+        }
+
+        button:hover, .btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #f1f5f9;
+        }
+
+        .btn-danger {
+            background-color: transparent;
+            color: var(--val-bad);
+            border: 1px solid transparent;
+        }
+
+        .btn-danger:hover {
+            background-color: #fee2e2;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border-radius: 4px;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            outline: none;
+            color: var(--text-main);
+            background: #fff;
+            resize: none;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+        }
+
+        .dp-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 0.5rem;
+            background-color: #f8fafc;
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
+        }
+
+        .dp-list-item:hover {
+            background-color: #f1f5f9;
+        }
+
+        .dp-list-item.active {
+            background-color: #eff6ff;
+            border-color: #bfdbfe;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .dp-list-item-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+            margin-right: 0.5rem;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 0.25rem;
+            opacity: 0.4;
+            transition: opacity 0.15s ease;
+        }
+
+        .dp-list-item:hover .order-actions {
+            opacity: 1;
+        }
+
+        .dp-workspace-header {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .alternatives-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        .alt-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .alt-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .alt-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .consequences-section {
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+        }
+
+        .consequences-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .consequence-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 6px;
+            background: #f8fafc;
+            border-left: 4px solid var(--val-neutral);
+        }
+
+        .consequence-item.neutral { border-left-color: var(--val-neutral); }
+        .consequence-item.good { border-left-color: var(--val-good); }
+        .consequence-item.bad { border-left-color: var(--val-bad); }
+
+        .consequence-controls {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .value-picker {
+            padding: 0.25rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-size: 0.75rem;
+            background: #fff;
+            outline: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+            background: #fff;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+        }
+
+        .hidden-file-input {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Decision Gathering Tool</h1>
+        <div class="io-actions">
+            <button class="btn btn-secondary" onclick="exportData()">Export JSON</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Import JSON</button>
+            <input type="file" id="importFile" class="hidden-file-input" accept=".json" onchange="importData(event)">
+        </div>
+    </header>
+
+    <div class="app-container">
+        <aside>
+            <div class="sidebar-header">
+                <span class="sidebar-title">Decision Points</span>
+                <button class="btn btn-sm" onclick="addDecisionPoint()">+ Add</button>
+            </div>
+            <div id="dpListContainer"></div>
+        </aside>
+
+        <main id="workspaceContainer">
+            <!-- Rendered Dynamic Workspace -->
+        </main>
+    </div>
+
+    <script>
+        let state = {
+            decisionPoints: [],
+            activeId: null
+        };
+
+        function autoResizeTextarea(element) {
+            element.style.height = 'auto';
+            element.style.height = element.scrollHeight * 1.5  + 'px';
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('decision_gathering_tool_state');
+            if (saved) {
+                try {
+                    state = JSON.parse(saved);
+                } catch (e) {
+                    console.error("Initialization cleaner triggered.", e);
+                }
+            }
+            if (!state.decisionPoints) state.decisionPoints = [];
+            if (state.decisionPoints.length > 0 && !state.activeId) {
+                state.activeId = state.decisionPoints[0].id;
+            }
+            render();
+        }
+
+        function saveState() {
+            localStorage.setItem('decision_gathering_tool_state', JSON.stringify(state));
+        }
+
+        function addDecisionPoint() {
+            const id = 'dp_' + Date.now();
+            state.decisionPoints.push({
+                id: id,
+
+title: 'New Decision Point',
+alternatives: []
+});
+state.activeId = id;
+saveState();
+render();
+}
+function removeDecisionPoint(id, event) {
+if(event) event.stopPropagation();
+state.decisionPoints = state.decisionPoints.filter(dp => dp.id !== id);
+if (state.activeId === id) {
+state.activeId = state.decisionPoints.length > 0 ? state.decisionPoints[0].id : null;
+}
+saveState();
+render();
+}
+function updateDecisionPointTitle(id, newTitle) {
+const dp = state.decisionPoints.find(dp => dp.id === id);
+if (dp) {
+dp.title = newTitle;
+saveState();
+const navItem = document.querySelector(`[data-id="${id}"] .dp-list-item-title`);
+if (navItem) navItem.textContent = newTitle;
+}
+}
+function moveDecisionPoint(index, direction, event) {
+event.stopPropagation();
+const targetIndex = index + direction;
+if (targetIndex < 0 || targetIndex >= state.decisionPoints.length) return;
+const temp = state.decisionPoints[index];
+state.decisionPoints[index] = state.decisionPoints[targetIndex];
+state.decisionPoints[targetIndex] = temp;
+saveState();
+render();
+}
+function addAlternative(dpId) {
+const dp = state.decisionPoints.find(dp => dp.id === dpId);
+if (!dp) return;
+dp.alternatives.push({
+id: 'alt_' + Date.now() + Math.random().toString(36).substr(2, 4),
+title: 'New Alternative Description',
+consequences: [],
+sortOrder: 'natural'
+});
+saveState();
+render();
+}
+function updateAlternativeTitle(dpId, altId, newTitle) {
+const dp = state.decisionPoints.find(dp => dp.id === dpId);
+if (!dp) return;
+const alt = dp.alternatives.find(a => a.id === altId);
+if (alt) {
+alt.title = newTitle;
+saveState();
+}
+}
+function removeAlternative(dpId, altId) {
+const dp = state.decisionPoints.find(dp => dp.id === dpId);
+if (!dp) return;
+dp.alternatives = dp.alternatives.filter(a => a.id !== altId);
+saveState();
+render();
+}
+function addConsequence(dpId, altId) {
+const dp = state.decisionPoints.find(dp => dp.id === dpId);
+if (!dp) return;
+const alt = dp.alternatives.find(a => a.id === altId);
+if (!alt) return;
+alt.consequences.push({
+id: 'con_' + Date.now() + Math.random().toString(36).substr(2, 4),
+text: 'New Consequence Details...',
+value: 'neutral'
+});
+saveState();
+render();
+}
+function updateConsequenceText(dpId, altId, conId, newText) {
+const dp = state.decisionPoints.find(dp => dp.id === dpId);
+if (!dp) return;
+const alt = dp.alternatives.find(a => a.id === altId);
+if (!alt) return;
+const con = alt.consequences.find(c => c.id === conId);
+if (con) {
+con.text = newText;
+saveState();
+}
+}
+function updateConsequenceValue(dpId, altId, conId, newValue) {
+const dp = state.decisionPoints.find(dp => dp.id === dpId);
+if (!dp) return;
+const alt = dp.alternatives.find(a => a.id === altId);
+if (!alt) return;
+const con = alt.consequences.find(c => c.id === conId);
+if (con) {
+con.value = newValue;
+saveState();
+render();
+}
+}
+function removeConsequence(dpId, altId, conId) {
+const dp = state.decisionPoints.find(dp => dp.id === dpId);
+if (!dp) return;
+const alt = dp.alternatives.find(a => a.id === altId);
+if (!alt) return;
+alt.consequences = alt.consequences.filter(c => c.id !== conId);
+saveState();
+render();
+}
+function changeSortStrategy(dpId, altId, strategy) {
+const dp = state.decisionPoints.find(dp => dp.id === dpId);
+if (!dp) return;
+const alt = dp.alternatives.find(a => a.id === altId);
+if (alt) {
+alt.sortOrder = strategy;
+saveState();
+render();
+}
+}
+function getSortedConsequences(alternative) {
+const list = [...alternative.consequences];
+const strategy = alternative.sortOrder || 'natural';
+if (strategy === 'natural') return list;
+const valueWeight = { 'good': 3, 'neutral': 2, 'bad': 1 };
+return list.sort((a, b) => {
+if (strategy === 'good-first') return valueWeight[b.value] - valueWeight[a.value];
+if (strategy === 'bad-first') return valueWeight[a.value] - valueWeight[b.value];
+return 0;
+});
+}
+function exportData() {
+const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+const downloadAnchor = document.createElement('a');
+downloadAnchor.setAttribute("href", dataStr);
+downloadAnchor.setAttribute("download", "decision_matrix.json");
+document.body.appendChild(downloadAnchor);
+downloadAnchor.click();
+downloadAnchor.remove();
+}
+function importData(event) {
+const input = event.target;
+if (!input.files || input.files.length === 0) return;
+const reader = new FileReader();
+reader.onload = function() {
+try {
+const parsed = JSON.parse(reader.result);
+if (parsed && typeof parsed === 'object') {
+state = parsed;
+if (!state.decisionPoints) state.decisionPoints = [];
+state.activeId = state.decisionPoints.length > 0 ? state.decisionPoints[0].id : null;
+saveState();
+render();
+}
+} catch (e) {
+alert("Failed to parse JSON file.");
+}
+input.value = '';
+};
+reader.readAsText(input.files);
+}
+function selectDecisionPoint(id) {
+state.activeId = id;
+render();
+}
+function render() {
+renderSidebar();
+renderWorkspace();
+}
+function renderSidebar() {
+const container = document.getElementById('dpListContainer');
+container.innerHTML = '';
+state.decisionPoints.forEach((dp, index) => {
+const isActive = dp.id === state.activeId;
+const item = document.createElement('div');
+item.className = `dp-list-item ${isActive ? 'active' : ''}`;
+item.setAttribute('data-id', dp.id);
+item.onclick = () => selectDecisionPoint(dp.id);
+const titleSpan = document.createElement('span');
+titleSpan.className = 'dp-list-item-title';
+titleSpan.textContent = dp.title;
+const orderDiv = document.createElement('div');
+orderDiv.className = 'order-actions';
+const upBtn = document.createElement('button');
+upBtn.className = 'btn btn-secondary btn-sm';
+upBtn.innerHTML = '▲';
+upBtn.disabled = index === 0;
+upBtn.onclick = (e) => moveDecisionPoint(index, -1, e);
+const downBtn = document.createElement('button');
+downBtn.className = 'btn btn-secondary btn-sm';
+downBtn.innerHTML = '▼';
+downBtn.disabled = index === state.decisionPoints.length - 1;
+downBtn.onclick = (e) => moveDecisionPoint(index, 1, e);
+orderDiv.appendChild(upBtn);
+orderDiv.appendChild(downBtn);
+item.appendChild(titleSpan);
+item.appendChild(orderDiv);
+container.appendChild(item);
+});
+}
+function renderWorkspace() {
+const container = document.getElementById('workspaceContainer');
+container.innerHTML = '';
+const currentDP = state.decisionPoints.find(dp => dp.id === state.activeId);
+if (!currentDP) {
+container.innerHTML = `<div class="empty-state"><h3>No Decision Point Selected</h3><p style="margin-top: 0.5rem;">Create or select a decision point from the sidebar menu to begin tracking alternatives.</p></div>`;
+return;
+}
+const headerDiv = document.createElement('div');
+headerDiv.className = 'dp-workspace-header';
+const titleInput = document.createElement('input');
+titleInput.type = 'text';
+titleInput.style.fontSize = '1.25rem';
+titleInput.style.fontWeight = '600';
+titleInput.value = currentDP.title;
+titleInput.oninput = (e) => updateDecisionPointTitle(currentDP.id, e.target.value);
+const workspaceActions = document.createElement('div');
+workspaceActions.style.display = 'flex';
+workspaceActions.style.gap = '0.5rem';
+const addAltBtn = document.createElement('button');
+addAltBtn.className = 'btn';
+addAltBtn.textContent = '+ Add Alternative';
+addAltBtn.onclick = () => addAlternative(currentDP.id);
+const deleteDpBtn = document.createElement('button');
+deleteDpBtn.className = 'btn btn-danger';
+deleteDpBtn.textContent = 'Delete Point';
+deleteDpBtn.onclick = () => removeDecisionPoint(currentDP.id);
+workspaceActions.appendChild(addAltBtn);
+workspaceActions.appendChild(deleteDpBtn);
+headerDiv.appendChild(titleInput);
+headerDiv.appendChild(workspaceActions);
+container.appendChild(headerDiv);
+if (currentDP.alternatives.length === 0) {
+const emptyAlt = document.createElement('div');
+emptyAlt.className = 'empty-state';
+emptyAlt.innerHTML = `<h4>No Alternatives Yet</h4><p style="margin-top: 0.5rem;">Click "+ Add Alternative" to analyze different options.</p>`;
+container.appendChild(emptyAlt);
+return;
+}
+const grid = document.createElement('div');
+grid.className = 'alternatives-grid';
+currentDP.alternatives.forEach(alt => {
+const card = document.createElement('div');
+card.className = 'alt-card';
+const altHeader = document.createElement('div');
+altHeader.className = 'alt-header';
+const altHeaderTop = document.createElement('div');
+altHeaderTop.className = 'alt-header-top';
+const labelSpan = document.createElement('span');
+labelSpan.style.fontSize = '0.8rem';
+labelSpan.style.fontWeight = '700';
+labelSpan.style.color = 'var(--text-muted)';
+labelSpan.textContent = "ALTERNATIVE";
+const deleteAltBtn = document.createElement('button');
+deleteAltBtn.className = 'btn btn-danger btn-sm';
+deleteAltBtn.innerHTML = '✕';
+deleteAltBtn.onclick = () => removeAlternative(currentDP.id, alt.id);
+altHeaderTop.appendChild(labelSpan);
+altHeaderTop.appendChild(deleteAltBtn);
+altHeader.appendChild(altHeaderTop);
+const altTextArea = document.createElement('textarea');
+altTextArea.value = alt.title;
+altTextArea.placeholder = "Describe this alternative course of action...";
+altTextArea.rows = 2;
+altTextArea.oninput = (e) => {
+updateAlternativeTitle(currentDP.id, alt.id, e.target.value);
+autoResizeTextarea(e.target);
+};
+altHeader.appendChild(altTextArea);
+card.appendChild(altHeader);
+const conSection = document.createElement('div');
+conSection.className = 'consequences-section';
+const conHeaderRow = document.createElement('div');
+conHeaderRow.className = 'consequences-header-row';
+const conTitle = document.createElement('span');
+conTitle.style.fontSize = '0.85rem';
+conTitle.style.fontWeight = '600';
+conTitle.style.color = 'var(--text-muted)';
+conTitle.textContent = 'Consequences';
+const sortSelect = document.createElement('select');
+sortSelect.className = 'value-picker';
+sortSelect.style.fontSize = '0.7rem';
+sortSelect.innerHTML = `<option value="natural" ${alt.sortOrder === 'natural' ? 'selected' : ''}>Sort: Default</option> <option value="good-first" ${alt.sortOrder === 'good-first' ? 'selected' : ''}>Sort: Positive</option> <option value="bad-first" ${alt.sortOrder === 'bad-first' ? 'selected' : ''}>Sort: Negative</option>`;
+sortSelect.onchange = (e) => changeSortStrategy(currentDP.id, alt.id, e.target.value);
+conHeaderRow.appendChild(conTitle);
+conHeaderRow.appendChild(sortSelect);
+conSection.appendChild(conHeaderRow);
+const sortedList = getSortedConsequences(alt);
+sortedList.forEach(con => {
+const conItem = document.createElement('div');
+conItem.className = `consequence-item ${con.value}`;
+const conTextArea = document.createElement('textarea');
+conTextArea.value = con.text;
+conTextArea.placeholder = "Enter consequence context description...";
+conTextArea.rows = 1;
+conTextArea.style.border = 'none';
+conTextArea.style.background = 'transparent';
+conTextArea.style.padding = '0';
+conTextArea.oninput = (e) => {
+updateConsequenceText(currentDP.id, alt.id, con.id, e.target.value);
+autoResizeTextarea(e.target);
+};
+const conControls = document.createElement('div');
+conControls.className = 'consequence-controls';
+const valPicker = document.createElement('select');
+valPicker.className = 'value-picker';
+valPicker.innerHTML = `<option value="neutral" ${con.value === 'neutral' ? 'selected' : ''}>Neutral (Blue)</option> <option value="good" ${con.value === 'good' ? 'selected' : ''}>Good (Green)</option> <option value="bad" ${con.value === 'bad' ? 'selected' : ''}>Bad (Red)</option>`;
+valPicker.onchange = (e) => updateConsequenceValue(currentDP.id, alt.id, con.id, e.target.value);
+const deleteConBtn = document.createElement('button');
+deleteConBtn.className = 'btn btn-danger btn-sm';
+deleteConBtn.style.padding = '2px 6px';
+deleteConBtn.innerHTML = '✕ Remove';
+deleteConBtn.onclick = () => removeConsequence(currentDP.id, alt.id, con.id);
+conControls.appendChild(valPicker);
+conControls.appendChild(deleteConBtn);
+conItem.appendChild(conTextArea);
+conItem.appendChild(conControls);
+conSection.appendChild(conItem);
+setTimeout(() => autoResizeTextarea(conTextArea), 0);
+});
+const addConBtn = document.createElement('button');
+addConBtn.className = 'btn btn-secondary btn-sm';
+addConBtn.style.marginTop = '0.5rem';
+addConBtn.style.width = '100%';
+addConBtn.style.justifyContent = 'center';
+addConBtn.textContent = '+ Add Consequence';
+addConBtn.onclick = () => addConsequence(currentDP.id, alt.id);
+conSection.appendChild(addConBtn);
+card.appendChild(conSection);
+grid.appendChild(card);
+setTimeout(() => autoResizeTextarea(altTextArea), 0);
+});
+container.appendChild(grid);
+}
+window.onload = loadState;
+</script>
+</body>
+</html>
